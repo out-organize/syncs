@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Script to read data from BigQuery and write it as CSV to Google Cloud Storage.
+Script to read data from BigQuery and write it as CSV to Google Cloud Storage
+using Application Default Credentials (runs as the service account).
 """
 
 import os
@@ -9,11 +10,12 @@ from google.cloud import bigquery
 from google.cloud import storage
 from google.oauth2 import service_account
 import io
+import json
 from datetime import datetime
 
 def main():
     # Configuration from environment variables
-    SERVICE_ACCOUNT_PATH = os.getenv("SERVICE_ACCOUNT_PATH")
+    SERVICE_ACCOUNT_CREDENTIALS = os.getenv("SERVICE_ACCOUNT_CREDENTIALS")
     SOURCE_PROJECT_ID = os.getenv("SOURCE_PROJECT_ID")
     DESTINATION_PROJECT_ID = os.getenv("DESTINATION_PROJECT_ID")
     BUCKET_NAME = os.getenv("BUCKET_NAME")
@@ -40,7 +42,7 @@ def main():
     
     # Validate required environment variables
     required_vars = {
-        "SERVICE_ACCOUNT_PATH": SERVICE_ACCOUNT_PATH,
+        "SERVICE_ACCOUNT_CREDENTIALS": SERVICE_ACCOUNT_CREDENTIALS,
         "SOURCE_PROJECT_ID": SOURCE_PROJECT_ID,
         "DESTINATION_PROJECT_ID": DESTINATION_PROJECT_ID,
         "BUCKET_NAME": BUCKET_NAME,
@@ -52,9 +54,10 @@ def main():
         raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
     
     # try:
-    # Load service account credentials
-    credentials = service_account.Credentials.from_service_account_file(
-        SERVICE_ACCOUNT_PATH,
+    # Parse service account credentials from environment variable
+    credentials_info = json.loads(SERVICE_ACCOUNT_CREDENTIALS)
+    credentials = service_account.Credentials.from_service_account_info(
+        credentials_info,
         scopes=["https://www.googleapis.com/auth/cloud-platform"]
     )
     
@@ -65,6 +68,7 @@ def main():
     )
     
     print("Executing BigQuery query...")
+    print(f"Query: {QUERY}")
     
     # Execute query and load results into pandas DataFrame
     df = bq_client.query(QUERY).to_dataframe()
