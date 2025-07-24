@@ -1,0 +1,9 @@
+# Google Cloud dependencies
+google-cloud-bigquery>=3.25.0
+google-cloud-storage>=2.16.0
+
+# Data processing
+pandas>=2.2.0
+
+# Core dependencies (these are typically included but explicit for clarity)
+pyarrow>=15.0.0
