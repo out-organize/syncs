@@ -3,21 +3,42 @@ Script to read data from BigQuery and write it as CSV to Google Cloud Storage
 using Application Default Credentials (runs as the service account).
 """
 
-import os
+import argparse
 import pandas as pd
 from google.cloud import bigquery
 from google.cloud import storage
 import io
 from datetime import datetime
 
+def parse_arguments():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='Export BigQuery data to Google Cloud Storage as CSV')
+    
+    parser.add_argument('--source-project-id', required=True,
+                        help='Source project ID where BigQuery data resides')
+    parser.add_argument('--destination-project-id', required=True,
+                        help='Destination project ID for GCS bucket')
+    parser.add_argument('--bucket-name', required=True,
+                        help='Name of the GCS bucket to upload to')
+    parser.add_argument('--dataset-name', required=True,
+                        help='BigQuery dataset name')
+    parser.add_argument('--output-file-type', default='export',
+                        help='Output file type (used for table name and file naming) (default: export)')
+    parser.add_argument('--query-filter', default='',
+                        help='Optional WHERE clause filter for the BigQuery query')
+    
+    return parser.parse_args()
+
 def main():
-    # Configuration from environment variables
-    SOURCE_PROJECT_ID = os.getenv("SOURCE_PROJECT_ID")
-    DESTINATION_PROJECT_ID = os.getenv("DESTINATION_PROJECT_ID")
-    BUCKET_NAME = os.getenv("BUCKET_NAME")
-    DATASET_NAME = os.getenv("DATASET_NAME")
-    OUTPUT_FILE_TYPE = os.getenv("OUTPUT_FILE_TYPE", "export")  # Default fallback
-    QUERY_FILTER = os.getenv("BIGQUERY_SQL_FILTER","") 
+    # Parse command line arguments
+    args = parse_arguments()
+    
+    SOURCE_PROJECT_ID = args.source_project_id
+    DESTINATION_PROJECT_ID = args.destination_project_id
+    BUCKET_NAME = args.bucket_name
+    DATASET_NAME = args.dataset_name
+    OUTPUT_FILE_TYPE = args.output_file_type
+    QUERY_FILTER = args.query_filter
     
     # Generate timestamped filename
     current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -35,18 +56,6 @@ def main():
         SELECT *
         FROM `{SOURCE_PROJECT_ID}.{DATASET_NAME}.{OUTPUT_FILE_TYPE}`
         """
-    
-    # Validate required environment variables
-    required_vars = {
-        "SOURCE_PROJECT_ID": SOURCE_PROJECT_ID,
-        "DESTINATION_PROJECT_ID": DESTINATION_PROJECT_ID,
-        "BUCKET_NAME": BUCKET_NAME,
-        "DATASET_NAME": DATASET_NAME
-    }
-    
-    missing_vars = [var for var, value in required_vars.items() if not value]
-    if missing_vars:
-        raise ValueError(f"Missing required environment variables: {', '.join(missing_vars)}")
     
     try:
         # Initialize BigQuery client using Application Default Credentials
