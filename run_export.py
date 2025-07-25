@@ -89,6 +89,19 @@ def main():
         
         print("Upload completed successfully!")
         print(f"File available at: gs://{BUCKET_NAME}/{OUTPUT_FILENAME}")
+
+        bq_destination_client = bigquery.Client(project=DESTINATION_PROJECT_ID)
+
+        load_query = f"""
+            LOAD DATA OVERWRITE TABLE `{DESTINATION_PROJECT_ID}`.{DATASET_NAME}.{OUTPUT_FILE_TYPE}
+            FROM FILES (
+                source_format = 'CSV',
+                uris = ['gs://{BUCKET_NAME}/{OUTPUT_FILENAME}']
+            );
+        """
+
+        res = bq_destination_client.query(load_query)
+
         
     except Exception as e:
         print(f"Error occurred: {str(e)}")
