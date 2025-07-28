@@ -123,8 +123,7 @@ def main():
 
         # Prepare for final load query
         logger.info("Preparing final load query to destination BigQuery table")
-        job_config = bigquery.QueryJobConfig()
-        job_config.location = "us-central1"
+        job_config = bigquery.QueryJobConfig(location = "us-central1")
         logger.debug(f"Job config location set to: {job_config.location}")
 
         bq_destination_client = bigquery.Client(project=DESTINATION_PROJECT_ID)
