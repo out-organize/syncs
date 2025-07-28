@@ -121,10 +121,6 @@ def main():
         logger.info("CSV upload to GCS completed successfully!")
         logger.info(f"File available at: gs://{BUCKET_NAME}/{OUTPUT_FILENAME}")
 
-        # Prepare for final load query
-        logger.info("Preparing final load query to destination BigQuery table")
-        job_config = bigquery.QueryJobConfig(location = "us-central1")
-        logger.debug(f"Job config location set to: {job_config.location}")
 
         bq_destination_client = bigquery.Client(project=DESTINATION_PROJECT_ID)
         logger.info("BigQuery destination client initialized successfully")
@@ -142,7 +138,7 @@ def main():
 
         # Execute the final query and handle potential failure
         try:
-            res = bq_destination_client.query(load_query, job_config=job_config)
+            res = bq_destination_client.query(load_query, location='us-central1')
             
             # Wait for the job to complete and check for errors
             res.result()  # This will raise an exception if the job failed
